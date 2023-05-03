@@ -40,8 +40,25 @@ export class AuthService {
       where: { email: signInInput.email },
     });
     if (!user) {
-
+      throw new Error('User not found');
     }
+    const isPasswordValid = await argon.verify(
+      user.hasedPassword,
+      signInInput.password,
+    );
+    if (!isPasswordValid) {
+      throw new Error('Invalid password');
+    }
+    const { accessToken, refreshToken } = await this.createToken(
+      user.id,
+      user.email,
+    );
+    await this.updateRefreshToken(user.id, refreshToken);
+    return {
+      accessToken,
+      refreshToken,
+      user,
+    };
   }
 
   findAll() {
